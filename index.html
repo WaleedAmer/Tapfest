@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no">
+	<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+	<title>Canvas Node</title>
+	<style>
+		body {
+			background-color: #287eff;
+			font-family: 'Oswald', sans-serif;
+			color: white;
+		}
+		canvas {
+			margin: auto;
+			left: 0; top: 0; right: 0; bottom:0;
+			position: absolute;
+			width: 384px;
+			height: 384px;
+			background-color: white;
+			padding: 0;
+			box-shadow: 0px 3px 1px 2px rgba(0,0,0,0.2);
+		}
+		#nameID {
+			font-size: 1.2em;
+			text-align: center;
+		}
+		#highsc {
+			font-size: 1.2em;
+			text-align: center;
+			color: #ffe300;
+		}
+	</style>
+</head>
+<body>
+	<p id='nameID'></p>
+	<canvas id='canv'></canvas>
+
+	<script src='/socket.io/socket.io.js'></script>
+	<script>
+		// Set up socket
+		var socket = io();
+
+		var name = 'Name';
+		var taps = 0;
+
+		// Accept tap coordinates
+		socket.on('tap', function(msg){
+			var col = msg.color;
+			addPoint(msg.x, msg.y, col);
+		});
+
+		socket.on('mytap', function(msg){
+
+			if (msg.taps%15 == 0){
+				achievement('5 taps!', msg.col);
+			}
+
+			document.getElementById('nameID').innerHTML = msg.txt;
+		})
+
+		socket.on('newUser', function(msg){
+			sendMessage(msg);
+		});
+
+		socket.on('userLeft', function(msg){
+			sendMessage(msg);
+		});
+
+		socket.on('hello', function(msg){
+			sendMessage(msg);
+		});
+
+		socket.on('conct', function(msg){
+			sendMessage(msg);
+
+			var nn = msg.split(' ');
+			name = nn[2] + ' ' + nn[3];
+			document.getElementById('nameID').innerHTML = name.slice(0,-1) + ' - 0 taps';
+		});
+
+		var ach = {
+			width: 384,
+			height: 384,
+			y: 800,
+			dy: 800,
+			opacity: 0,
+			txt: '',
+			active: false
+		};
+
+		var achievement = function(txt, col){
+			ach.txt = txt;
+			ach.opacity = 1;
+			ach.y = 800;
+			ach.dy = 0;
+			ach.fillStyle = col;
+			ach.active = false;
+		};
+
+		var sendMessage = function(txt){
+
+			var msg = {
+				txt: txt,
+				alive: false,
+				opacity: 1,
+				x: -500,
+				y: 0
+			};
+
+			window.setTimeout(function(){
+				msg.alive = true;
+			}, 2500);
+
+			messages[messages.length] = msg;
+			
+		};
+
+		// Elements
+		var canvas = document.getElementById('canv');
+
+		// Set up canvas
+		var ctx = canvas.getContext('2d');
+		canvas.width = 384;
+		canvas.height = 384;
+
+		// Set up variables
+		var px = 48;
+
+		var message = {
+			x: 20,
+			y: 40,
+			font: '21px Oswald',
+			opacity: 1,
+			txt: 'Tap Anywhere!'
+		};
+
+		// Set up arrays
+		var points = [];
+		var touches = [];
+		var messages = [];
+
+		// When window loads up
+		window.onload = function(){
+
+			// Set up css size to match canvas size
+			canvas.style.width = canvas.width;
+			canvas.style.height = canvas.height;
+
+			socket.emit('con');
+
+			// Begin step functions
+			window.setInterval(function() {
+				update();
+				draw();
+			}, 1000/60);
+		};
+
+		// On Drag
+		document.addEventListener('touchmove', function(e) { 
+			e.preventDefault(); 
+		}, false);
+
+		// On Tap
+		document.addEventListener('touchstart', function(e){
+			var touchList = e.changedTouches;
+			var rect = canvas.getBoundingClientRect();
+			var xx = touchList[touchList.length-1].screenX - rect.left;
+			var yy = touchList[touchList.length-1].screenY - rect.top;
+
+			var col = generateColor();
+
+			var pkg = {
+				x: xx,
+				y: yy,
+				color: col
+			};
+
+			socket.emit('tap', pkg);
+
+		}, false);
+
+		// On Click
+		window.addEventListener('mousedown', function(e){
+
+			var rect = canvas.getBoundingClientRect();
+
+			var xx = e.clientX - rect.left;
+			var yy = e.clientY - rect.top;
+
+			var col = generateColor();
+
+			var pkg = {
+				x: xx,
+				y: yy,
+				color: col
+			};
+
+			socket.emit('tap', pkg);
+		}, false);
+
+		// Step Event
+		var update = function(){
+
+			// Fade points away
+			for (var i=0; i<points.length; i++) {
+				if (points[i].opacity > 0 ) {
+					points[i].opacity -= 0.02;
+					points[i].radius += 10;
+				}
+				if (points[i].opacity < 0) {
+					points[i].opacity = 0;
+					points[i].alive = false;
+				}
+			}
+
+			// Fade messages away
+			for (var i=0; i<messages.length; i++) {
+
+				if (messages[i].x < 0) {
+					messages[i].x+=20
+				}
+
+				if (messages[i].alive == true && messages[i].x == 0){
+					messages[i].y-=2;
+				
+					if (messages[i].opacity > 0){
+						messages[i].opacity -= 0.02;
+					}
+				}
+			}
+
+
+		};
+
+		// Add a colored point to the canvas
+		var addPoint = function(dx, dy, color){
+
+			var point = {
+				x: dx,
+				y: dy,
+				radius: 30,
+				opacity: 1,
+				fillStyle: color,
+				alive: true
+			};
+
+			points[points.length] = point;
+		};
+
+		// Drawing
+		var draw = function(){
+			ctx.clearRect(0, 0, px*8, px*8);
+
+			if (ach.y !== ach.dy){
+				ach.y = ach.y + (ach.dy-ach.y)/8;
+			}
+
+			if (ach.opacity > 0){
+				ach.opacity -= 0.005;
+			};
+
+			if (ach.opacity < 0.0001){
+				ach.dy = 800;
+				ach.opacity = 0;
+			};
+
+			ctx.fillStyle = ach.fillStyle + ach.opacity + ')';
+			ctx.fillRect(0,ach.y,384,384);
+
+			canvas.backgroundColor = ach.fillStyle + '1)';
+
+			// Draw Points
+			for (var i=0; i<points.length; i++) {
+				if (points[i].alive == true) {
+					ctx.fillStyle = points[i].fillStyle + points[i].opacity+')';
+					ctx.beginPath();
+					ctx.arc(points[i].x, points[i].y, points[i].radius, 0, Math.PI*2, true);
+					ctx.closePath();
+					ctx.fill();
+				}
+			}
+
+			// Messages
+			//for (var i=0; i<messages.length; i++){
+
+			if (messages.length > 0) {
+				var i = messages.length-1
+
+				if (messages.length<0) {
+					i = messages.length
+				};
+
+				if (messages[i].opacity > 0){
+					ctx.fillStyle = 'rgba(0,0,0,'+messages[i].opacity+')';
+					ctx.font = '21px Helvetica';
+					ctx.fillText(messages[i].txt, message.x+messages[i].x, message.y+messages[i].y);
+				};
+			};
+		};
+
+		// Generate a random color
+		var generateColor = function(){
+			var r = Math.floor(Math.random()*256);
+			var g = Math.floor(Math.random()*256);
+			var b = Math.floor(Math.random()*256);
+
+			return 'rgba('+r+','+g+','+b+',';
+		};
+	</script>
+</body>
+</html>
