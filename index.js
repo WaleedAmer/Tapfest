@@ -71,7 +71,8 @@ io.on('connection', function(socket){
 
 // ----- OTHER STUFF ----- //
 
-// Prompt when you star the server 
-http.listen(3000, function(){
+// Prompt when you start the server 
+
+http.listen(process.env.PORT || 3000, function(){
 	console.log('Server active on *:3000');
 });
