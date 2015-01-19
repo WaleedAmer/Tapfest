@@ -63,7 +63,7 @@ io.on('connection', function(socket){
 		};
 
 		socket.emit('mytap', pkg);
-		socket.broadcast.emit('tap', msg);
+		io.emit('tap', msg);
 		console.log(name + ': ('+msg.x + ',' + msg.y +')');
 	});
 });
@@ -71,8 +71,7 @@ io.on('connection', function(socket){
 
 // ----- OTHER STUFF ----- //
 
-// Prompt when you start the server 
-
-http.listen(process.env.PORT || 3000, function(){
+// Prompt when you star the server 
+http.listen(3000, function(){
 	console.log('Server active on *:3000');
 });

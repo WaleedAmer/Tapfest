@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no">
 	<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
-	<title>Canvas Node</title>
+	<title>Tapfest 2015</title>
 	<style>
 		body {
 			background-color: #287eff;
@@ -24,6 +24,13 @@
 		#nameID {
 			font-size: 1.2em;
 			text-align: center;
+			user-select: none;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+		}
+		#nameID:hover {
+			cursor: pointer;
 		}
 		#highsc {
 			font-size: 1.2em;
@@ -176,12 +183,14 @@
 				color: col
 			};
 
+
+			addPoint(xx, yy, col);
 			socket.emit('tap', pkg);
 
 		}, false);
 
 		// On Click
-		window.addEventListener('mousedown', function(e){
+		document.addEventListener('mousedown', function(e){
 
 			var rect = canvas.getBoundingClientRect();
 
@@ -196,6 +205,7 @@
 				color: col
 			};
 
+			addPoint(xx, yy, col);
 			socket.emit('tap', pkg);
 		}, false);
 
@@ -252,18 +262,20 @@
 		var draw = function(){
 			ctx.clearRect(0, 0, px*8, px*8);
 
+			// Always seek dy
 			if (ach.y !== ach.dy){
 				ach.y = ach.y + (ach.dy-ach.y)/8;
 			}
 
+			// Decrease opacity
 			if (ach.opacity > 0){
 				ach.opacity -= 0.005;
-			};
-
-			if (ach.opacity < 0.0001){
-				ach.dy = 800;
+			}
+			else {
 				ach.opacity = 0;
-			};
+				ach.dy = 800;
+				ach.y = 800;
+			}
 
 			ctx.fillStyle = ach.fillStyle + ach.opacity + ')';
 			ctx.fillRect(0,ach.y,384,384);
