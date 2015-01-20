@@ -50,7 +50,7 @@ io.on('connection', function(socket){
 
 
 	socket.on('con', function(){
-		socket.emit('conct', 'Joined as '+name+'!');
+		socket.emit('conct', 'Welcome to Tapfest, ' + name + '!');
 	});
 
 	socket.on('disconnect', function(){

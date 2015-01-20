@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no">
 	<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
-	<title>Tapfest 2015</title>
+	<title>Tapfest</title>
 	<style>
 		body {
 			background-color: #287eff;
@@ -42,6 +42,13 @@
 			text-align: center;
 			color: #ffe300;
 			bottom: 10%;
+			user-select: none;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+		}
+		#users:hover {
+			cursor: pointer;
 		}
 	</style>
 </head>
@@ -85,7 +92,7 @@
 					tag = 'Franklin Five'
 					break;
 				case 1000:
-					tag = 'You Have no Life'
+					tag = 'Get a Life'
 					break;
 			};
 
@@ -94,7 +101,7 @@
 			};
 
 			document.getElementById('nameID').innerHTML = msg.txt;
-		})
+		});
 
 		socket.on('newUser', function(msg){
 			sendMessage(msg);
@@ -112,12 +119,12 @@
 			sendMessage(msg);
 
 			var nn = msg.split(' ');
-			name = nn[2] + ' ' + nn[3];
+			name = nn[3] + ' ' + nn[4];
 			document.getElementById('nameID').innerHTML = name.slice(0,-1) + ' - 0 taps';
 		});
 
 		socket.on('userCount', function(msg){
-			usersP.innerHTML = msg + ' people are tapping'
+			usersP.innerHTML = msg + ' people are online'
 		});
 
 		var ach = {
