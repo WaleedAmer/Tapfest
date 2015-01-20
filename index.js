@@ -1,10 +1,5 @@
-
-
-
-
 //        Socket.io Canvas Game        //
 //         by Waleed Amer 2015         //
-
 
 // Frameworks
 var app = require('express')();
@@ -92,11 +87,7 @@ io.on('connection', function(socket){
 	});
 });
 
-
-// ----- OTHER STUFF ----- //
-
-// Prompt when you start the server 
-
+// Start server
 http.listen(process.env.PORT || 3000, function(){
-	console.log('Server active on *:3000');
+	console.log('Server online');
 });
