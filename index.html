@@ -79,6 +79,8 @@
 				case 10:
 					tag = 'Big Ten'
 					break;
+				case 25:
+					tag = 'Five x Five'
 				case 50:
 					tag = 'Get Rich or Die Trying'
 					break;
@@ -90,6 +92,9 @@
 					break;
 				case 500:
 					tag = 'Franklin Five'
+					break;
+				case 750:
+					tag = 'Almost Cool'
 					break;
 				case 1000:
 					tag = 'Get a Life'
@@ -144,10 +149,12 @@
 			ach.dy = 0;
 			ach.fillStyle = col;
 			ach.active = false;
-			sendMessage(txt, 'rgba(255, 255, 255,');
+
+			var hex = rgb2hex(col+'1)');
+			sendMessage(txt, 'rgba(255, 255, 255,', hex);
 		};
 
-		var sendMessage = function(txt, col){
+		var sendMessage = function(txt, col, txt2){
 
 			var msg = {
 				txt: txt,
@@ -157,12 +164,31 @@
 				y: -200
 			};
 
+			var submsg = {
+				txt: txt2,
+				alive: false,
+				opacity: 1,
+				x: 0,
+				y: 400
+			};
+
 			if (!col) {
 				msg.col = 'rgba(0,0,0,';
 			} 
 			else {
 				msg.col = col;
 			}
+
+			if (!txt2) {
+
+			}
+			else {
+				submessages[submessages.length] = submsg;
+
+				window.setTimeout(function(){
+					submsg.alive = true;
+				}, 2500);
+			};
 
 			window.setTimeout(function(){
 				msg.alive = true;
@@ -192,10 +218,19 @@
 			txt: 'Tap Anywhere!'
 		};
 
+		var submessage = {
+			x: 20,
+			y: 354,
+			font: '21px Oswald',
+			opacity: 1,
+			txt: 'Tap Anywhere!'
+		};
+
 		// Set up arrays
 		var points = [];
 		var touches = [];
 		var messages = [];
+		var submessages = [];
 
 		// When window loads up
 		window.onload = function(){
@@ -294,6 +329,25 @@
 				}
 			}
 
+			for (var i=0; i<submessages.length; i++) {
+
+				if (submessages[i].x < 0) {
+					submessages[i].x+=20;
+				}
+
+				if (submessages[i].y !== 0 && !submessages[i].alive){
+					submessages[i].y = submessages[i].y + (0 - submessages[i].y)/8;
+				}
+
+				if (submessages[i].alive == true && submessages[i].x == 0){
+					submessages[i].y+=2;
+				
+					if (submessages[i].opacity > 0){
+						submessages[i].opacity -= 0.02;
+					}
+				}
+			}
+
 
 		};
 
@@ -351,6 +405,7 @@
 			//for (var i=0; i<messages.length; i++){
 
 			if (messages.length > 0) {
+
 				var i = messages.length-1
 
 				if (messages.length<0) {
@@ -364,6 +419,22 @@
 					ctx.fillText(messages[i].txt, canvas.width/2, message.y+messages[i].y);
 				};
 			};
+
+			if (submessages.length > 0) {
+
+				var i = submessages.length-1
+
+				if (submessages.length<0) {
+					i = submessages.length
+				};
+
+				if (submessages[i].opacity > 0){
+					ctx.fillStyle = submessages[i].col+submessages[i].opacity+')';
+					ctx.textAlign = 'center';
+					ctx.font = '21px Helvetica';
+					ctx.fillText(submessages[i].txt, canvas.width/2, submessage.y+submessages[i].y);
+				};
+			};
 		};
 
 		// Generate a random color
@@ -374,6 +445,16 @@
 
 			return 'rgba('+r+','+g+','+b+',';
 		};
+
+		var rgb2hex = function(rgb){
+			rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+
+ 			return (rgb && rgb.length === 4) ? "#" +
+			("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+			("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+			("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+		}
+
 	</script>
 </body>
 </html>
