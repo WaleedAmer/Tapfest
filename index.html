@@ -75,6 +75,7 @@
 
 			var tag = "";
 
+			// Handle achievements
 			switch (msg.taps){
 				case 10:
 					tag = 'Big Ten'
@@ -85,11 +86,17 @@
 				case 50:
 					tag = 'Get Rich or Die Trying'
 					break;
+				case 80:
+					tag = 'The Good ol\' Eighties'
+					break;
 				case 100:
 					tag = "Keepin' it One Hunnid"
 					break;
 				case 300:
 					tag = 'This is Sparta'
+					break;
+				case 314:
+					tag = '3.14159265359'
 					break;
 				case 500:
 					tag = 'Franklin Five'
@@ -109,28 +116,33 @@
 			document.getElementById('nameID').innerHTML = msg.txt;
 		});
 
+		// When a user joins
 		socket.on('newUser', function(msg){
 			sendMessage(msg);
 		});
 
+		// When a user leaves
 		socket.on('userLeft', function(msg){
 			sendMessage(msg);
 		});
 
-		socket.on('hello', function(msg){
-			sendMessage(msg);
-		});
-
+		// Welcome message
 		socket.on('conct', function(msg){
-			sendMessage(msg);
+			sendMessage("Welcome to Tapfest!");
 
+			// Get name from string and change top HUD element
 			var nn = msg.split(' ');
 			name = nn[3] + ' ' + nn[4];
 			document.getElementById('nameID').innerHTML = name.slice(0,-1) + ' - 0 taps';
 		});
 
 		socket.on('userCount', function(msg){
-			usersP.innerHTML = msg + ' people are online'
+			if (msg > 1){
+				usersP.innerHTML = msg + ' people are online';
+			}else{
+				usersP.innerHTML = msg + ' person is online';
+			};
+			
 		});
 
 		var ach = {
@@ -367,8 +379,10 @@
 			points[points.length] = point;
 		};
 
-		// Drawing
+		// Handle drawing
 		var draw = function(){
+
+			// Clear the canvas
 			ctx.clearRect(0, 0, px*8, px*8);
 
 			// Always seek dy
@@ -381,18 +395,23 @@
 				ach.opacity -= 0.005;
 			}
 			else {
+
+				// Reset achievement
 				ach.opacity = 0;
 				ach.dy = 800;
 				ach.y = 800;
 			}
 
+			// Draw achievement
 			ctx.fillStyle = ach.fillStyle + ach.opacity + ')';
 			ctx.fillRect(0,ach.y,384,384);
 
-			canvas.backgroundColor = ach.fillStyle + '1)';
+			canvas.style.backgroundColor = ach.fillStyle + '1)';
 
 			// Draw Points
 			for (var i=0; i<points.length; i++) {
+
+				// If point is marked alive then draw point
 				if (points[i].alive == true) {
 					ctx.fillStyle = points[i].fillStyle + points[i].opacity+')';
 					ctx.beginPath();
@@ -402,17 +421,18 @@
 				}
 			}
 
-			// Messages
-			//for (var i=0; i<messages.length; i++){
-
+			// Draw messages
 			if (messages.length > 0) {
 
+				// Set index to that of the most recent message
 				var i = messages.length-1
 
+				// Index cannot be less than 0 
 				if (messages.length<0) {
 					i = messages.length
 				};
 
+				// Handle fading/drawing
 				if (messages[i].opacity > 0){
 					ctx.fillStyle = messages[i].col+messages[i].opacity+')';
 					ctx.textAlign = 'center';
@@ -421,14 +441,18 @@
 				};
 			};
 
+			// Draw submessages
 			if (submessages.length > 0) {
-
+				
+				// Set index to that of the most recent submessage
 				var i = submessages.length-1
 
-				if (submessages.length<0) {
+				// Index cannot be less than 0 
+				if (submessages.length < 0) {
 					i = submessages.length
 				};
 
+				// Handle fading/drawing
 				if (submessages[i].opacity > 0){
 					ctx.fillStyle = submessages[i].col+submessages[i].opacity+')';
 					ctx.textAlign = 'center';
@@ -447,6 +471,7 @@
 			return 'rgba('+r+','+g+','+b+',';
 		};
 
+		// Convert color to hex code
 		var rgb2hex = function(rgb){
 			rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
 
