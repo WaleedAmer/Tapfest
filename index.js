@@ -16,8 +16,14 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + '/index.html');
 });
 
+var count = 0;
+
 // When someone connects to the app
 io.on('connection', function(socket){
+
+	count++;
+
+	io.sockets.emit('userCount', count);
 
 	var taps = 0;
 
@@ -39,7 +45,9 @@ io.on('connection', function(socket){
 
 	socket.broadcast.emit('newUser', name + ' joined!');
 
-	console.log(name +' joined')
+	console.log(name +' joined');
+	console.log(count + ' people are online');
+
 
 	socket.on('con', function(){
 		socket.emit('conct', 'Joined as '+name+'!');
@@ -48,6 +56,8 @@ io.on('connection', function(socket){
 	socket.on('disconnect', function(){
 		socket.broadcast.emit('userLeft', name+ ' left');
 		console.log(name+ ' left');
+		count--;
+		io.sockets.emit('userCount', count);
 	});
 
 	socket.on('tap', function(msg){

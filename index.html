@@ -22,6 +22,9 @@
 			box-shadow: 0px 3px 1px 2px rgba(0,0,0,0.2);
 		}
 		#nameID {
+			position: absolute;
+			top: 10%;
+			width: 100%;
 			font-size: 1.2em;
 			text-align: center;
 			user-select: none;
@@ -32,16 +35,20 @@
 		#nameID:hover {
 			cursor: pointer;
 		}
-		#highsc {
+		#users {
+			position: absolute;
+			width: 100%;
 			font-size: 1.2em;
 			text-align: center;
 			color: #ffe300;
+			bottom: 10%;
 		}
 	</style>
 </head>
 <body>
 	<p id='nameID'></p>
 	<canvas id='canv'></canvas>
+	<p id='users'></p>
 
 	<script src='/socket.io/socket.io.js'></script>
 	<script>
@@ -59,9 +66,32 @@
 
 		socket.on('mytap', function(msg){
 
-			if (msg.taps%15 == 0){
-				achievement('5 taps!', msg.col);
-			}
+			var tag = "";
+
+			switch (msg.taps){
+				case 10:
+					tag = 'Big Ten'
+					break;
+				case 50:
+					tag = 'Get Rich or Die Trying'
+					break;
+				case 100:
+					tag = "Keepin' it One Hunnid"
+					break;
+				case 300:
+					tag = 'This is Sparta'
+					break;
+				case 500:
+					tag = 'Franklin Five'
+					break;
+				case 1000:
+					tag = 'You Have no Life'
+					break;
+			};
+
+			if (tag !== ""){
+				achievement(tag, msg.col);
+			};
 
 			document.getElementById('nameID').innerHTML = msg.txt;
 		})
@@ -86,11 +116,15 @@
 			document.getElementById('nameID').innerHTML = name.slice(0,-1) + ' - 0 taps';
 		});
 
+		socket.on('userCount', function(msg){
+			usersP.innerHTML = msg + ' people are tapping'
+		});
+
 		var ach = {
 			width: 384,
 			height: 384,
-			y: 800,
-			dy: 800,
+			y: -384,
+			dy: -384,
 			opacity: 0,
 			txt: '',
 			active: false
@@ -99,21 +133,29 @@
 		var achievement = function(txt, col){
 			ach.txt = txt;
 			ach.opacity = 1;
-			ach.y = 800;
+			ach.y = -384;
 			ach.dy = 0;
 			ach.fillStyle = col;
 			ach.active = false;
+			sendMessage(txt, 'rgba(255, 255, 255,');
 		};
 
-		var sendMessage = function(txt){
+		var sendMessage = function(txt, col){
 
 			var msg = {
 				txt: txt,
 				alive: false,
 				opacity: 1,
-				x: -500,
-				y: 0
+				x: 0,
+				y: -200
 			};
+
+			if (!col) {
+				msg.col = 'rgba(0,0,0,';
+			} 
+			else {
+				msg.col = col;
+			}
 
 			window.setTimeout(function(){
 				msg.alive = true;
@@ -125,6 +167,7 @@
 
 		// Elements
 		var canvas = document.getElementById('canv');
+		var usersP = document.getElementById('users');
 
 		// Set up canvas
 		var ctx = canvas.getContext('2d');
@@ -228,7 +271,11 @@
 			for (var i=0; i<messages.length; i++) {
 
 				if (messages[i].x < 0) {
-					messages[i].x+=20
+					messages[i].x+=20;
+				}
+
+				if (messages[i].y !== 0 && !messages[i].alive){
+					messages[i].y = messages[i].y + (0 - messages[i].y)/8;
 				}
 
 				if (messages[i].alive == true && messages[i].x == 0){
@@ -304,9 +351,10 @@
 				};
 
 				if (messages[i].opacity > 0){
-					ctx.fillStyle = 'rgba(0,0,0,'+messages[i].opacity+')';
+					ctx.fillStyle = messages[i].col+messages[i].opacity+')';
+					ctx.textAlign = 'center';
 					ctx.font = '21px Helvetica';
-					ctx.fillText(messages[i].txt, message.x+messages[i].x, message.y+messages[i].y);
+					ctx.fillText(messages[i].txt, canvas.width/2, message.y+messages[i].y);
 				};
 			};
 		};
