@@ -62,17 +62,22 @@
 		// Set up socket
 		var socket = io();
 
-		var name = 'Name';
+		// Set up name variable
+		var name = '';
+
+		// Start counting number of taps/score
 		var taps = 0;
 
-		// Accept tap coordinates
+		// Accept tap coordinates from server
 		socket.on('tap', function(msg){
 			var col = msg.color;
 			addPoint(msg.x, msg.y, col);
 		});
 
+		// Accept self's tap from server
 		socket.on('mytap', function(msg){
 
+			// Set achievement tag to none/default
 			var tag = "";
 
 			// Handle achievements
@@ -109,10 +114,12 @@
 					break;
 			};
 
+			// Achievement if tag is not blank
 			if (tag !== ""){
 				achievement(tag, msg.col);
 			};
 
+			// Update top HUD element
 			document.getElementById('nameID').innerHTML = msg.txt;
 		});
 
@@ -136,6 +143,7 @@
 			document.getElementById('nameID').innerHTML = name.slice(0,-1) + ' - 0 taps';
 		});
 
+		// Update number of people connected
 		socket.on('userCount', function(msg){
 			if (msg > 1){
 				usersP.innerHTML = msg + ' people are online';
@@ -145,6 +153,7 @@
 			
 		});
 
+		// Achievement Object
 		var ach = {
 			width: 384,
 			height: 384,
@@ -155,6 +164,7 @@
 			active: false
 		};
 
+		// Create Achievement
 		var achievement = function(txt, col){
 			ach.txt = txt;
 			ach.opacity = 1;
@@ -163,12 +173,22 @@
 			ach.fillStyle = col;
 			ach.active = false;
 
+			// Set background color to achievement color
+			window.setTimeout(function(){
+				canvas.style.backgroundColor = ach.fillStyle + '1)';
+		 	}, 500); 
+
+			// Convert color to hex code
 			var hex = rgb2hex(col+'1)');
+
+			// Send message with submessage (hex code)
 			sendMessage(txt, 'rgba(255, 255, 255,', hex);
 		};
 
+		// Send a message/notification
 		var sendMessage = function(txt, col, txt2){
 
+			// Message package
 			var msg = {
 				txt: txt,
 				alive: false,
@@ -177,6 +197,7 @@
 				y: -200
 			};
 
+			// Submessage package
 			var submsg = {
 				txt: txt2,
 				alive: false,
@@ -185,6 +206,7 @@
 				y: 400
 			};
 
+			// Handle optional color parameter
 			if (!col) {
 				msg.col = 'rgba(0,0,0,';
 			} 
@@ -192,23 +214,24 @@
 				msg.col = col;
 			}
 
+			// Handle optional submessage parameter
 			if (!txt2) {
-
+				// Nothing
 			}
 			else {
 				submessages[submessages.length] = submsg;
-
 				window.setTimeout(function(){
 					submsg.alive = true;
 				}, 2500);
 			};
 
+			// Set message alive to fade out
 			window.setTimeout(function(){
 				msg.alive = true;
 			}, 2500);
 
+			// Add message to array
 			messages[messages.length] = msg;
-			
 		};
 
 		// Elements
@@ -223,6 +246,7 @@
 		// Set up variables
 		var px = 48;
 
+		// Message object
 		var message = {
 			x: 20,
 			y: 40,
@@ -231,6 +255,7 @@
 			txt: 'Tap Anywhere!'
 		};
 
+		// Submessage object
 		var submessage = {
 			x: 20,
 			y: 364,
@@ -252,6 +277,7 @@
 			canvas.style.width = canvas.width;
 			canvas.style.height = canvas.height;
 
+			// Tell server the user's page loaded
 			socket.emit('con');
 
 			// Begin step functions
@@ -269,92 +295,109 @@
 		// On Tap
 		document.addEventListener('touchstart', function(e){
 			var touchList = e.changedTouches;
+
+			// Get relative touch coordinates
 			var rect = canvas.getBoundingClientRect();
 			var xx = touchList[touchList.length-1].screenX - rect.left;
 			var yy = touchList[touchList.length-1].screenY - rect.top;
 
+			// Generate color of the point
 			var col = generateColor();
 
+			// Package up variables
 			var pkg = {
 				x: xx,
 				y: yy,
 				color: col
 			};
 
-
-			addPoint(xx, yy, col);
+			// Send the package to the server
 			socket.emit('tap', pkg);
+
+			// Create the point locally
+			addPoint(xx, yy, col);
 
 		}, false);
 
 		// On Click
 		document.addEventListener('mousedown', function(e){
 
+			// Relative mouse position
 			var rect = canvas.getBoundingClientRect();
-
 			var xx = e.clientX - rect.left;
 			var yy = e.clientY - rect.top;
 
+			// Generate color of the point
 			var col = generateColor();
 
+			// Package up variables
 			var pkg = {
 				x: xx,
 				y: yy,
 				color: col
 			};
 
-			addPoint(xx, yy, col);
+			// Send the package to the server
 			socket.emit('tap', pkg);
+
+			// Create the point locally
+			addPoint(xx, yy, col);
+
 		}, false);
 
 		// Step Event
 		var update = function(){
 
-			// Fade points away
-			for (var i=0; i<points.length; i++) {
+			// Iterate through points
+			for (var i=0; i<points.length; i++){
+				// Fade out points
 				if (points[i].opacity > 0 ) {
 					points[i].opacity -= 0.02;
 					points[i].radius += 10;
 				}
-				if (points[i].opacity < 0) {
+				// Kill point and make it invisible
+				if (points[i].opacity < 0){
 					points[i].opacity = 0;
 					points[i].alive = false;
 				}
 			}
 
-			// Fade messages away
-			for (var i=0; i<messages.length; i++) {
+			// Iterate through messages
+			for (var i=0; i<messages.length; i++){
 
-				if (messages[i].x < 0) {
-					messages[i].x+=20;
-				}
-
+				// Smooth y-movement
 				if (messages[i].y !== 0 && !messages[i].alive){
 					messages[i].y = messages[i].y + (0 - messages[i].y)/8;
 				}
 
+				// Message leave transition
 				if (messages[i].alive == true && messages[i].x == 0){
-					messages[i].y-=2;
+					
+					// Rise out of screen
+ 					messages[i].y-=2;
 				
+					// Fade out
 					if (messages[i].opacity > 0){
 						messages[i].opacity -= 0.02;
 					}
 				}
 			}
 
+			// Iterate through submessages
 			for (var i=0; i<submessages.length; i++) {
 
-				if (submessages[i].x < 0) {
-					submessages[i].x+=20;
-				}
-
+				// Smooth y-movement
 				if (submessages[i].y !== 0 && !submessages[i].alive){
 					submessages[i].y = submessages[i].y + (0 - submessages[i].y)/8;
 				}
 
+				// Submessage leave transition
 				if (submessages[i].alive == true && submessages[i].x == 0){
+
+					// Drop out of screen
 					submessages[i].y+=2;
 				
+					// Fade out
 					if (submessages[i].opacity > 0){
 						submessages[i].opacity -= 0.02;
 					}
@@ -367,6 +410,7 @@
 		// Add a colored point to the canvas
 		var addPoint = function(dx, dy, color){
 
+			// Package up variables
 			var point = {
 				x: dx,
 				y: dy,
@@ -376,6 +420,7 @@
 				alive: true
 			};
 
+			// Add package to array
 			points[points.length] = point;
 		};
 
@@ -385,16 +430,18 @@
 			// Clear the canvas
 			ctx.clearRect(0, 0, px*8, px*8);
 
-			// Always seek dy
+			// Smooth achievement y-movement
 			if (ach.y !== ach.dy){
 				ach.y = ach.y + (ach.dy-ach.y)/8;
 			}
 
-			// Decrease opacity
+			// If achievement is visible
 			if (ach.opacity > 0){
+
+				// Fadeout
 				ach.opacity -= 0.005;
 			}
-			else {
+			else{
 
 				// Reset achievement
 				ach.opacity = 0;
@@ -406,9 +453,7 @@
 			ctx.fillStyle = ach.fillStyle + ach.opacity + ')';
 			ctx.fillRect(0,ach.y,384,384);
 
-			canvas.style.backgroundColor = ach.fillStyle + '1)';
-
-			// Draw Points
+			// Iterate through points
 			for (var i=0; i<points.length; i++) {
 
 				// If point is marked alive then draw point
@@ -421,7 +466,7 @@
 				}
 			}
 
-			// Draw messages
+			// If there are messages in the array
 			if (messages.length > 0) {
 
 				// Set index to that of the most recent message
@@ -441,7 +486,7 @@
 				};
 			};
 
-			// Draw submessages
+			// If there are submessages in the array
 			if (submessages.length > 0) {
 				
 				// Set index to that of the most recent submessage
